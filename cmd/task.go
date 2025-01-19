@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"task-scheduler/internal/scheduler"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -46,15 +47,18 @@ func init() {
 
 func createTask(cmd *cobra.Command, args []string) error {
 	command := args[0]
-	fmt.Printf("Creating task with command: %s\n", command)
-	fmt.Printf("Schedule: %s\n", schedule)
-	fmt.Printf("Timeout: %v\n", timeout)
-	// TODO: Implement actual task creation
+
+	scheduler.ScheduleTask(schedule, command)
+
 	return nil
 }
 
 func listTasks(cmd *cobra.Command, args []string) error {
-	fmt.Println("Listing all tasks...")
-	// TODO: Implement task listing
+	tasks := scheduler.GetTasks()
+
+	for _, task := range tasks {
+		fmt.Println(task)
+	}
+
 	return nil
 }
