@@ -1,6 +1,8 @@
-package scheduler
+package daemon
 
-type TaskQueue []*Task
+import "task-scheduler/internal/common/types"
+
+type TaskQueue []*types.Task
 
 func (q TaskQueue) Len() int {
 	return len(q)
@@ -12,14 +14,14 @@ func (q TaskQueue) Less(i, j int) bool {
 
 func (q TaskQueue) Swap(i, j int) {
 	q[i], q[j] = q[j], q[i]
-	q[i].index = i
-	q[j].index = j
+	q[i].QueueIndex = i
+	q[j].QueueIndex = j
 }
 
 func (q *TaskQueue) Push(x any) {
 	n := len(*q)
-	task := x.(*Task)
-	task.index = n
+	task := x.(*types.Task)
+	task.QueueIndex = n
 	*q = append(*q, task)
 }
 
@@ -28,7 +30,7 @@ func (q *TaskQueue) Pop() any {
 	n := len(old)
 	task := old[n-1]
 	old[n-1] = nil
-	task.index = -1
+	task.QueueIndex = -1
 	*q = old[0 : n-1]
 	return task
 }

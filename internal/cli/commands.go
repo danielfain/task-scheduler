@@ -1,17 +1,32 @@
-package cmd
+package cli
 
 import (
 	"fmt"
+	"os"
 	"task-scheduler/internal/scheduler"
 	"time"
 
 	"github.com/spf13/cobra"
 )
 
+var rootCmd = &cobra.Command{
+	Use:   "scheduler",
+	Short: "A distributed task scheduler",
+	Long: `A distributed task scheduler that allows you to schedule and manage tasks
+across multiple machines with reliable execution and monitoring.`,
+}
+
 var (
 	schedule string
 	timeout  time.Duration
 )
+
+func Execute() {
+	if err := rootCmd.Execute(); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+}
 
 func init() {
 	taskCmd := &cobra.Command{

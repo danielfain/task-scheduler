@@ -1,4 +1,4 @@
-package scheduler
+package types
 
 import "time"
 
@@ -7,8 +7,7 @@ type Task struct {
 	CronExpression string
 	Command        string
 	ScheduledTime  time.Time
-
-	index int
+	QueueIndex     int
 }
 
 type TaskState string
