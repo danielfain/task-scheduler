@@ -3,7 +3,6 @@ package cli
 import (
 	"fmt"
 	"os"
-	"task-scheduler/internal/scheduler"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -39,13 +38,13 @@ func init() {
 		Use:   "create [command]",
 		Short: "Create a new task",
 		Args:  cobra.ExactArgs(1),
-		RunE:  createTask,
+		//		RunE:  createTask,
 	}
 
 	listCmd := &cobra.Command{
 		Use:   "list",
 		Short: "List all tasks",
-		RunE:  listTasks,
+		// 		RunE:  listTasks,
 	}
 
 	// Add flags to create command
@@ -58,22 +57,4 @@ func init() {
 
 	// Add task command to root
 	rootCmd.AddCommand(taskCmd)
-}
-
-func createTask(cmd *cobra.Command, args []string) error {
-	command := args[0]
-
-	scheduler.ScheduleTask(schedule, command)
-
-	return nil
-}
-
-func listTasks(cmd *cobra.Command, args []string) error {
-	tasks := scheduler.GetTasks()
-
-	for _, task := range tasks {
-		fmt.Println(task)
-	}
-
-	return nil
 }

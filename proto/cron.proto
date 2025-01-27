@@ -1,0 +1,30 @@
+syntax = "proto3";
+package cron;
+
+option go_package = "/proto";
+
+service TaskScheduler {
+	rpc AddTask(AddTaskRequest) returns (TaskId) {}
+	rpc DeleteTask(TaskId) returns (Empty) {}
+	rpc ListTasks(Empty) returns (stream Task) {}
+}
+
+message AddTaskRequest {
+	string expression = 1; // Cron expression
+	string command = 2;  // Shell command to execute
+	bytes metadata = 3;  // Optional JSON metadata
+}
+
+message Task {
+	string id = 1;
+	string expression = 2;
+	string command = 3;
+	string next_run = 4; // timestamp
+	bool is_active = 5;
+}
+
+message TaskId {
+	string id = 1;
+}
+
+message Empty {}

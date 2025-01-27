@@ -1,10 +1,11 @@
-package daemon
+package server
 
 import (
 	"context"
 	"database/sql"
 	"log"
 	"net"
+	"task-scheduler/internal/scheduler"
 	"task-scheduler/proto"
 	"time"
 
@@ -18,7 +19,7 @@ import (
 type TaskSchedulerServer struct {
 	proto.UnimplementedTaskSchedulerServer
 	db    *sql.DB
-	queue *TaskQueue
+	queue *scheduler.TaskQueue
 }
 
 func (s *TaskSchedulerServer) AddTask(ctx context.Context, req *proto.AddTaskRequest) (*proto.TaskId, error) {
@@ -37,7 +38,7 @@ func (s *TaskSchedulerServer) AddTask(ctx context.Context, req *proto.AddTaskReq
 		return nil, status.Errorf(codes.Internal, "Error inserting task: %v", err)
 	}
 
-	s.queue.Push(&Task{
+	s.queue.Push(&scheduler.Task{
 		Id:         taskId,
 		Expression: req.Expression,
 		Schedule:   schedule,
@@ -50,7 +51,7 @@ func (s *TaskSchedulerServer) AddTask(ctx context.Context, req *proto.AddTaskReq
 }
 
 func (s *TaskSchedulerServer) ListTasks(empty *proto.Empty, stream proto.TaskScheduler_ListTasksServer) error {
-	for _, task := range s.queue.tasks {
+	for _, task := range s.queue.Tasks {
 		stream.Send(&proto.Task{
 			Id:         task.Id,
 			Expression: task.Expression,
@@ -63,40 +64,17 @@ func (s *TaskSchedulerServer) ListTasks(empty *proto.Empty, stream proto.TaskSch
 	return nil
 }
 
-func StartServer(db *sql.DB) {
+func StartGRPCServer(db *sql.DB, queue *scheduler.TaskQueue) {
 	listener, err := net.Listen("tcp", ":50051")
 	if err != nil {
 		log.Fatalf("Failed to listen: %v", err)
 	}
 
 	grpcServer := grpc.NewServer()
-	proto.RegisterTaskSchedulerServer(grpcServer, &TaskSchedulerServer{db: db})
+	proto.RegisterTaskSchedulerServer(grpcServer, &TaskSchedulerServer{db: db, queue: queue})
 	log.Printf("gRPC server listening on %s", listener.Addr())
 
 	if err := grpcServer.Serve(listener); err != nil {
 		log.Fatalf("failed to serve: %v", err)
-	}
-}
-
-func startScheduler(q *TaskQueue) {
-	for {
-		if job := q.Peek(); job != nil {
-			now := time.Now()
-			waitTime := job.NextRun.Sub(now)
-
-			if waitTime <= 0 {
-				// Execute the job
-				go executeJob(job)
-				// Reschedule the job for next run
-				nextRun := cronParser.Parse(job.Schedule).Next(now)
-				q.RescheduleJob(job.ID, nextRun)
-			} else {
-				// Wait until the next job is ready
-				time.Sleep(waitTime)
-			}
-		} else {
-			// No jobs—sleep briefly to avoid CPU spin
-			time.Sleep(1 * time.Second)
-		}
 	}
 }
